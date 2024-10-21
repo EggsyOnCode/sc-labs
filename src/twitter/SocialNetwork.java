@@ -3,9 +3,8 @@
  */
 package twitter;
 
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * SocialNetwork provides methods that operate on a social network.
@@ -41,8 +40,23 @@ public class SocialNetwork {
      *         either authors or @-mentions in the list of tweets.
      */
     public static Map<String, Set<String>> guessFollowsGraph(List<Tweet> tweets) {
-        throw new RuntimeException("not implemented");
+        Map<String, Set<String>> followsGraph = new HashMap<>();
+
+        for (Tweet tweet : tweets) {
+            String author = tweet.getAuthor().toLowerCase();
+            Set<String> mentions = Extract.getMentionedUsers(Arrays.asList(tweet));
+
+            // Only add to the graph if the tweet contains mentions
+            if (!mentions.isEmpty()) {
+                followsGraph.putIfAbsent(author, new HashSet<>());
+                followsGraph.get(author).addAll(mentions);
+            }
+        }
+
+        return followsGraph;
     }
+
+
 
     /**
      * Find the people in a social network who have the greatest influence, in
@@ -54,7 +68,22 @@ public class SocialNetwork {
      *         descending order of follower count.
      */
     public static List<String> influencers(Map<String, Set<String>> followsGraph) {
-        throw new RuntimeException("not implemented");
+        Map<String, Integer> followerCounts = new HashMap<>();
+
+        // Count followers
+        for (Set<String> followedUsers : followsGraph.values()) {
+            for (String user : followedUsers) {
+                followerCounts.put(user, followerCounts.getOrDefault(user, 0) + 1);
+            }
+        }
+
+        // Sort users by follower count
+        return followerCounts.entrySet()
+                .stream()
+                .sorted((e1, e2) -> e2.getValue() - e1.getValue())
+                .map(Map.Entry::getKey)
+                .collect(Collectors.toList());
     }
+
 
 }
